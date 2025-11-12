@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schrijfheld - Schrijfspel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Patrick Hand', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      margin: 20px 0;
+      font-size: 2.5rem;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-container {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      max-width: 800px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .word-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .word-image {
+      font-size: 4rem;
+      margin-bottom: 10px;
+    }
+
+    .word-display {
+      font-size: 3rem;
+      font-family: 'Patrick Hand', cursive;
+      color: #333;
+      margin: 10px 0;
+      letter-spacing: 0.1em;
+    }
+
+    .dotted-word {
+      font-size: 2.5rem;
+      font-family: 'Patrick Hand', cursive;
+      color: #ccc;
+      margin: 10px 0;
+      letter-spacing: 0.1em;
+    }
+
+    .canvas-container {
+      position: relative;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .animation-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .trace-canvas {
+      position: relative;
+      z-index: 2;
+      border: 3px solid #667eea;
+      border-radius: 10px;
+      background: #fff;
+      touch-action: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .xp-section {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px 0;
+    }
+
+    .xp-display {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .xp-bar-container {
+      width: 100%;
+      height: 40px;
+      background: #e0e0e0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .xp-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      width: 0%;
+      transition: width 0.5s ease;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      border-radius: 25px;
+      border: none;
+      background: #667eea;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Patrick Hand', cursive;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+      min-width: 120px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .feedback {
+      font-size: 1.3rem;
+      margin: 15px 0;
+      min-height: 30px;
+      text-align: center;
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    .letter-progress {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .letter-box {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #ccc;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-family: 'Patrick Hand', cursive;
+      background: #f5f5f5;
+      transition: all 0.3s;
+    }
+
+    .letter-box.completed {
+      background: #4caf50;
+      border-color: #4caf50;
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    #confetti {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .word-display {
+        font-size: 2rem;
+      }
+
+      .dotted-word {
+        font-size: 1.8rem;
+      }
+
+      .trace-canvas {
+        width: 280px !important;
+        height: 280px !important;
+      }
+
+      .animation-canvas {
+        width: 280px !important;
+        height: 280px !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>✏️ Schrijfheld</h1>
+  <div class="game-container">
+    <div class="word-section">
+      <div class="word-image" id="wordImage">🍎</div>
+      <div class="word-display" id="wordDisplay"></div>
+      <div class="dotted-word" id="dottedWord"></div>
+    </div>
+
+    <div class="letter-progress" id="letterProgress"></div>
+
+    <div class="canvas-container">
+      <canvas id="animationCanvas" class="animation-canvas" width="400" height="400"></canvas>
+      <canvas id="traceCanvas" class="trace-canvas" width="400" height="400"></canvas>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="xp-section">
+      <div class="xp-display" id="xpDisplay">0 / 100 XP</div>
+      <div class="xp-bar-container">
+        <div class="xp-bar" id="xpBar">0%</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="replayAnimationBtn">🔄 Herhaal animatie</button>
+      <button id="nextWordBtn">➡️ Volgende woord</button>
+      <button id="clearBtn">🗑️ Wissen</button>
+    </div>
+  </div>
+
+  <div id="confetti"></div>
+
+  <script>
+    // Woordenlijst met emoji's
+    const words = [
+      { word: 'appel', emoji: '🍎' },
+      { word: 'hond', emoji: '🐶' },
+      { word: 'auto', emoji: '🚗' },
+      { word: 'boom', emoji: '🌳' },
+      { word: 'huis', emoji: '🏠' },
+      { word: 'zon', emoji: '☀️' },
+      { word: 'ster', emoji: '⭐' },
+      { word: 'vis', emoji: '🐟' }
+    ];
+
+    // Game state
+    let currentWordIndex = 0;
+    let currentLetterIndex = 0;
+    let xp = 0;
+    let currentWord = '';
+    let letterCompleted = [];
+    let drawing = false;
+    let lastX = 0, lastY = 0;
+    let animationPlaying = false;
+    let letterPaths = {};
+    let strokeCount = 0;
+    let totalStrokeLength = 0;
+    let letterTemplatePixels = null; // Store which pixels are part of the letter
+
+    // DOM elements
+    const wordImage = document.getElementById('wordImage');
+    const wordDisplay = document.getElementById('wordDisplay');
+    const dottedWord = document.getElementById('dottedWord');
+    const letterProgress = document.getElementById('letterProgress');
+    const animationCanvas = document.getElementById('animationCanvas');
+    const traceCanvas = document.getElementById('traceCanvas');
+    const xpDisplay = document.getElementById('xpDisplay');
+    const xpBar = document.getElementById('xpBar');
+    const feedback = document.getElementById('feedback');
+    const replayAnimationBtn = document.getElementById('replayAnimationBtn');
+    const nextWordBtn = document.getElementById('nextWordBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const animCtx = animationCanvas.getContext('2d');
+    const traceCtx = traceCanvas.getContext('2d');
+
+    // Initialize
+    function init() {
+      loadWord(0);
+      setupCanvas();
+    }
+
+    // Load a word
+    function loadWord(index) {
+      currentWordIndex = index % words.length;
+      currentWord = words[currentWordIndex].word;
+      currentLetterIndex = 0;
+      letterCompleted = new Array(currentWord.length).fill(false);
+
+      wordImage.textContent = words[currentWordIndex].emoji;
+      wordDisplay.textContent = currentWord;
+      updateDottedWord();
+      updateLetterProgress();
+      clearCanvases();
+      feedback.textContent = '';
+
+      // Start animation for first letter
+      setTimeout(() => {
+        playLetterAnimation(currentLetterIndex);
+      }, 500);
+    }
+
+    // Update dotted word display
+    function updateDottedWord() {
+      let dotted = '';
+      for (let i = 0; i < currentWord.length; i++) {
+        if (letterCompleted[i]) {
+          dotted += currentWord[i] + ' ';
+        } else {
+          dotted += '· ';
+        }
+      }
+      dottedWord.textContent = dotted.trim();
+    }
+
+    // Update letter progress boxes
+    function updateLetterProgress() {
+      letterProgress.innerHTML = '';
+      for (let i = 0; i < currentWord.length; i++) {
+        const box = document.createElement('div');
+        box.className = 'letter-box' + (letterCompleted[i] ? ' completed' : '');
+        box.textContent = currentWord[i].toUpperCase();
+        letterProgress.appendChild(box);
+      }
+    }
+
+    // Setup canvas
+    function setupCanvas() {
+      // Clear both canvases
+      clearCanvases();
+
+      // Draw dotted letter template on trace canvas
+      drawLetterTemplate();
+
+      // Setup drawing events
+      traceCanvas.addEventListener('mousedown', startDraw);
+      traceCanvas.addEventListener('mousemove', draw);
+      traceCanvas.addEventListener('mouseup', stopDraw);
+      traceCanvas.addEventListener('mouseleave', stopDraw);
+      traceCanvas.addEventListener('touchstart', startDraw);
+      traceCanvas.addEventListener('touchmove', function (e) {
+        draw(e);
+        e.preventDefault();
+      }, { passive: false });
+      traceCanvas.addEventListener('touchend', stopDraw);
+    }
+
+    // Clear both canvases
+    function clearCanvases() {
+      animCtx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+      traceCtx.clearRect(0, 0, traceCanvas.width, traceCanvas.height);
+      drawLetterTemplate();
+      strokeCount = 0;
+      totalStrokeLength = 0;
+    }
+
+    // Draw letter template (dotted/light gray) and store letter pixels
+    function drawLetterTemplate() {
+      if (currentLetterIndex >= currentWord.length) return;
+
+      const letter = currentWord[currentLetterIndex];
+      const centerX = traceCanvas.width / 2;
+      const centerY = traceCanvas.height / 2;
+
+      // First, draw the letter to get its pixel data
+      traceCtx.save();
+      traceCtx.globalAlpha = 0.2;
+      traceCtx.font = '200px "Patrick Hand", cursive';
+      traceCtx.textAlign = 'center';
+      traceCtx.textBaseline = 'middle';
+      traceCtx.fillStyle = '#999';
+      traceCtx.fillText(letter, centerX, centerY);
+      traceCtx.restore();
+
+      // Store which pixels are part of the letter template
+      letterTemplatePixels = new Set();
+      const imageData = traceCtx.getImageData(0, 0, traceCanvas.width, traceCanvas.height);
+      const data = imageData.data;
+
+      // Find all pixels that are part of the letter (gray template pixels)
+      for (let y = 0; y < traceCanvas.height; y++) {
+        for (let x = 0; x < traceCanvas.width; x++) {
+          const idx = (y * traceCanvas.width + x) * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          const a = data[idx + 3];
+
+          // Check if pixel is part of the gray letter template
+          // Gray template has r, g, b around 150-160 (0.2 opacity of #999)
+          if (r > 140 && r < 180 && g > 140 && g < 180 && b > 140 && b < 180 && a > 30) {
+            letterTemplatePixels.add(`${x},${y}`);
+          }
+        }
+      }
+    }
+
+    // Play letter writing animation with cat
+    function playLetterAnimation(letterIndex) {
+      if (letterIndex >= currentWord.length || animationPlaying) return;
+
+      animationPlaying = true;
+      const letter = currentWord[letterIndex];
+      animCtx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+
+      const centerX = animationCanvas.width / 2;
+      const centerY = animationCanvas.height / 2;
+      let progress = 0;
+      const duration = 2500; // 2.5 seconds
+      const startTime = Date.now();
+
+      // Create letter path for the cat to follow
+      animCtx.save();
+      animCtx.font = '200px "Patrick Hand", cursive';
+      animCtx.textAlign = 'center';
+      animCtx.textBaseline = 'middle';
+      const metrics = animCtx.measureText(letter);
+      const letterWidth = metrics.width;
+      const letterHeight = 200;
+      animCtx.restore();
+
+      // Load cat emoji as image
+      const catEmoji = '🐱';
+      const catSize = 40;
+
+      function animate() {
+        const elapsed = Date.now() - startTime;
+        progress = Math.min(elapsed / duration, 1);
+
+        animCtx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+
+        // Draw letter template (light gray)
+        animCtx.save();
+        animCtx.globalAlpha = 0.2;
+        animCtx.font = '200px "Patrick Hand", cursive';
+        animCtx.textAlign = 'center';
+        animCtx.textBaseline = 'middle';
+        animCtx.fillStyle = '#999';
+        animCtx.fillText(letter, centerX, centerY);
+        animCtx.restore();
+
+        // Draw the letter progressively as the cat writes it
+        animCtx.save();
+        animCtx.globalAlpha = 0.8;
+        animCtx.font = '200px "Patrick Hand", cursive';
+        animCtx.textAlign = 'center';
+        animCtx.textBaseline = 'middle';
+        animCtx.fillStyle = '#667eea';
+        
+        // Use clipping to show only the part that's been written
+        animCtx.save();
+        animCtx.beginPath();
+        // Create a mask that reveals the letter progressively
+        // For simplicity, we'll use a horizontal reveal from left to right
+        const revealWidth = letterWidth * progress;
+        animCtx.rect(centerX - letterWidth / 2, centerY - letterHeight / 2, revealWidth, letterHeight);
+        animCtx.clip();
+        animCtx.fillText(letter, centerX, centerY);
+        animCtx.restore();
+        animCtx.restore();
+
+        // Calculate cat position - follows the writing progress
+        // The cat moves along the letter from left to right
+        const catX = centerX - letterWidth / 2 + (letterWidth * progress);
+        const catY = centerY - 30; // Slightly above the letter
+
+        // Draw the cat emoji
+        animCtx.save();
+        animCtx.font = `${catSize}px Arial`;
+        animCtx.textAlign = 'center';
+        animCtx.textBaseline = 'middle';
+        animCtx.fillText(catEmoji, catX, catY);
+        animCtx.restore();
+
+        // Draw a small trail behind the cat
+        if (progress > 0.1) {
+          animCtx.save();
+          animCtx.strokeStyle = '#ff9800';
+          animCtx.lineWidth = 3;
+          animCtx.lineCap = 'round';
+          animCtx.beginPath();
+          const trailStartX = centerX - letterWidth / 2 + (letterWidth * Math.max(0, progress - 0.1));
+          animCtx.moveTo(trailStartX, catY);
+          animCtx.lineTo(catX, catY);
+          animCtx.stroke();
+          animCtx.restore();
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // Final state: show complete letter with cat at the end
+          animCtx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+          
+          // Draw complete letter
+          animCtx.save();
+          animCtx.globalAlpha = 0.2;
+          animCtx.font = '200px "Patrick Hand", cursive';
+          animCtx.textAlign = 'center';
+          animCtx.textBaseline = 'middle';
+          animCtx.fillStyle = '#999';
+          animCtx.fillText(letter, centerX, centerY);
+          animCtx.restore();
+          
+          animCtx.save();
+          animCtx.globalAlpha = 0.8;
+          animCtx.fillStyle = '#667eea';
+          animCtx.fillText(letter, centerX, centerY);
+          animCtx.restore();
+
+          // Show cat at the end
+          animCtx.save();
+          animCtx.font = `${catSize}px Arial`;
+          animCtx.textAlign = 'center';
+          animCtx.textBaseline = 'middle';
+          animCtx.fillText(catEmoji, centerX + letterWidth / 2, centerY - 30);
+          animCtx.restore();
+
+          setTimeout(() => {
+            animCtx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+            animationPlaying = false;
+          }, 800);
+        }
+      }
+
+      animate();
+    }
+
+    // Drawing functions
+    function startDraw(e) {
+      drawing = true;
+      [lastX, lastY] = getPos(e);
+      strokeCount = 0;
+      totalStrokeLength = 0;
+    }
+
+    function draw(e) {
+      if (!drawing || currentLetterIndex >= currentWord.length) return;
+
+      const [x, y] = getPos(e);
+      const dx = x - lastX;
+      const dy = y - lastY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      traceCtx.strokeStyle = '#667eea';
+      traceCtx.lineWidth = 20;
+      traceCtx.lineCap = 'round';
+      traceCtx.beginPath();
+      traceCtx.moveTo(lastX, lastY);
+      traceCtx.lineTo(x, y);
+      traceCtx.stroke();
+      [lastX, lastY] = [x, y];
+
+      // Track drawing activity
+      if (distance > 0) {
+        strokeCount++;
+        totalStrokeLength += distance;
+      }
+
+      // Don't check during drawing - only show progress occasionally
+      if (strokeCount % 20 === 0) {
+        checkLetterProgress();
+      }
+    }
+
+    function stopDraw() {
+      if (drawing) {
+        drawing = false;
+        // Only check completion when user stops drawing and has drawn enough
+        if (totalStrokeLength > 50) { // Minimum stroke length before checking
+          setTimeout(() => {
+            checkLetterCompletion();
+          }, 300); // Small delay to ensure canvas is updated
+        }
+      }
+    }
+
+    function getPos(e) {
+      const rect = traceCanvas.getBoundingClientRect();
+      if (e.touches && e.touches.length) {
+        return [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
+      } else {
+        return [e.offsetX, e.offsetY];
+      }
+    }
+
+    // Check letter progress (during drawing, doesn't complete)
+    function checkLetterProgress() {
+      if (currentLetterIndex >= currentWord.length || letterCompleted[currentLetterIndex]) return;
+      if (!drawing) return;
+
+      const percentage = calculateLetterCoverage();
+      if (percentage < 70) {
+        feedback.textContent = `${percentage}% voltooid...`;
+      }
+    }
+
+    // Calculate how much of the letter area is covered
+    function calculateLetterCoverage() {
+      if (!letterTemplatePixels || letterTemplatePixels.size === 0) {
+        return 0;
+      }
+
+      // Get canvas image data to check if user has drawn over the letter
+      const imageData = traceCtx.getImageData(0, 0, traceCanvas.width, traceCanvas.height);
+      const data = imageData.data;
+
+      let coveredPixels = 0;
+      const totalLetterPixels = letterTemplatePixels.size;
+
+      // Check each pixel that's part of the letter template
+      for (const pixelKey of letterTemplatePixels) {
+        const [x, y] = pixelKey.split(',').map(Number);
+        const idx = (y * traceCanvas.width + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+
+        // Check if this letter pixel has been covered by user's drawing
+        // User's drawing is blue (#667eea = rgb(102, 126, 234))
+        // Check for blue/purple pixels (high blue, moderate red/green)
+        // Also allow for some anti-aliasing, so check if blue component is significantly higher
+        if (b > 150 && (b > r + 30) && (b > g + 20)) {
+          coveredPixels++;
+        }
+      }
+
+      if (totalLetterPixels === 0) return 0;
+      return Math.round((coveredPixels / totalLetterPixels) * 100);
+    }
+
+    // Automatic letter detection with percentage tracking (only called when drawing stops)
+    function checkLetterCompletion() {
+      if (currentLetterIndex >= currentWord.length || letterCompleted[currentLetterIndex]) return;
+      if (drawing) return; // Don't check while still drawing
+
+      const percentage = calculateLetterCoverage();
+
+      // Show progress in feedback
+      if (percentage < 70) {
+        feedback.textContent = `${percentage}% voltooid - ga door met tekenen!`;
+        return; // Not complete yet
+      }
+
+      // Only complete when at least 70% is finished
+      if (percentage >= 70) {
+        completeLetter();
+      }
+    }
+
+    // Complete current letter
+    function completeLetter() {
+      if (letterCompleted[currentLetterIndex]) return;
+
+      letterCompleted[currentLetterIndex] = true;
+      currentLetterIndex++;
+      xp += 1;
+      updateXP();
+      updateLetterProgress();
+      updateDottedWord();
+
+      feedback.textContent = 'Goed gedaan! ✨';
+
+      // Clear animation canvas
+      animCtx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+
+      if (currentLetterIndex < currentWord.length) {
+        // Move to next letter
+        setTimeout(() => {
+          clearCanvases();
+          playLetterAnimation(currentLetterIndex);
+          feedback.textContent = '';
+        }, 1000);
+      } else {
+        // Word completed
+        feedback.textContent = 'Woord voltooid! 🎉';
+        setTimeout(() => {
+          feedback.textContent = '';
+          if (xp >= 100) {
+            launchConfetti();
+            feedback.textContent = 'Gefeliciteerd! Je hebt 100 XP behaald! 🎊';
+          }
+        }, 1500);
+      }
+    }
+
+    // Update XP display
+    function updateXP() {
+      xpDisplay.textContent = `${xp} / 100 XP`;
+      const percentage = Math.min((xp / 100) * 100, 100);
+      xpBar.style.width = percentage + '%';
+      xpBar.textContent = Math.round(percentage) + '%';
+
+      if (xp >= 100) {
+        launchConfetti();
+      }
+    }
+
+    // Confetti animation
+    function launchConfetti() {
+      const confettiDiv = document.getElementById('confetti');
+      confettiDiv.innerHTML = '';
+      for (let i = 0; i < 120; i++) {
+        const c = document.createElement('div');
+        c.style.position = 'absolute';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.top = '-10px';
+        c.style.width = '10px';
+        c.style.height = '18px';
+        c.style.background = `hsl(${Math.random() * 360},100%,60%)`;
+        c.style.opacity = 0.8;
+        c.style.borderRadius = '3px';
+        c.style.transform = `rotate(${Math.random() * 360}deg)`;
+        c.style.transition = 'top 2.2s cubic-bezier(.23,1.02,.64,1), opacity 2.2s';
+        confettiDiv.appendChild(c);
+        setTimeout(() => {
+          c.style.top = (80 + Math.random() * 15) + 'vh';
+          c.style.opacity = 0;
+        }, 30);
+      }
+    }
+
+    // Button handlers
+    replayAnimationBtn.onclick = function () {
+      if (currentLetterIndex < currentWord.length && !animationPlaying) {
+        playLetterAnimation(currentLetterIndex);
+      }
+    };
+
+    nextWordBtn.onclick = function () {
+      loadWord(currentWordIndex + 1);
+    };
+
+    clearBtn.onclick = function () {
+      clearCanvases();
+      feedback.textContent = '';
+    };
+
+    // Start game
+    init();
+  </script>
+</body>
+
+</html>
+

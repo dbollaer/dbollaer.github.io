@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eenhoorns Tellen Spel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 800px;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      color: #764ba2;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .score {
+      font-size: 2em;
+      font-weight: bold;
+      color: #667eea;
+      margin: 20px 0;
+      padding: 15px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 15px;
+    }
+
+    .eenhoorns-container {
+      margin: 30px 0;
+      min-height: 200px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+      background: linear-gradient(135deg, #ffeef8 0%, #e0f2fe 100%);
+      border-radius: 15px;
+    }
+
+    .eenhoorn {
+      font-size: 3em;
+      display: inline-block;
+      animation: bounceIn 0.5s ease-out;
+      transition: transform 0.3s;
+    }
+
+    .eenhoorn.leaving {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes bounceIn {
+      0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.2) rotate(180deg);
+      }
+      100% {
+        transform: scale(1) rotate(360deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(0) rotate(-360deg) translateY(-50px);
+        opacity: 0;
+      }
+    }
+
+    .vraag {
+      font-size: 1.5em;
+      margin: 30px 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #fff9e6 0%, #ffe6f0 100%);
+      border-radius: 15px;
+      min-height: 80px;
+    }
+
+    .vraag-type {
+      font-size: 0.8em;
+      color: #764ba2;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .visual-counting {
+      margin: 20px 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .visual-group {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      border: 2px dashed rgba(118, 75, 162, 0.3);
+    }
+
+    .visual-eenhoorn {
+      font-size: 2.5em;
+      animation: float 2s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .visual-eenhoorn:nth-child(2n) {
+      animation-delay: 0.2s;
+    }
+
+    .visual-eenhoorn:nth-child(3n) {
+      animation-delay: 0.4s;
+    }
+
+    input[type="number"] {
+      font-size: 1.5em;
+      padding: 12px 20px;
+      border: 3px solid #667eea;
+      border-radius: 10px;
+      text-align: center;
+      width: 150px;
+      margin: 10px;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .feedback {
+      font-size: 1.3em;
+      font-weight: bold;
+      margin: 20px 0;
+      min-height: 30px;
+      padding: 10px;
+    }
+
+    .feedback.correct {
+      color: #00c800;
+    }
+
+    .feedback.incorrect {
+      color: #ff0000;
+    }
+
+    .victory {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      flex-direction: column;
+    }
+
+    .victory.show {
+      display: flex;
+    }
+
+    .victory-content {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .victory-content h2 {
+      font-size: 3em;
+      color: #764ba2;
+      margin: 20px 0;
+    }
+
+    .victory-content p {
+      font-size: 1.5em;
+      margin: 20px 0;
+    }
+
+    #fireworkCanvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🦄 Eenhoorns Tellen 🦄</h1>
+    <div class="score" id="score">Je hebt 0 eenhoorns</div>
+    <div class="eenhoorns-container" id="eenhoornsContainer"></div>
+    <div class="vraag" id="vraag"></div>
+    <div class="visual-counting" id="visualCounting" style="display:none;"></div>
+    <input type="number" id="antwoord" style="display:none;" min="0">
+    <button id="startBtn">Start Spel</button>
+    <button id="checkBtn" style="display:none;">Controleer</button>
+    <div class="feedback" id="feedback"></div>
+  </div>
+  <canvas id="fireworkCanvas"></canvas>
+  <div class="victory" id="victory">
+    <div class="victory-content">
+      <h2>🎉 Gefeliciteerd! 🎉</h2>
+      <p>Je hebt 100 eenhoorns verzameld!</p>
+      <button onclick="location.reload()">Opnieuw Spelen</button>
+    </div>
+  </div>
+
+  <script>
+    let score = 0;
+    let isAdditionProblem = true; // Alternates between addition and visual counting
+    let currentAnswer = 0;
+    let problemType = 'addition'; // 'addition' or 'visual'
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function updateScore() {
+      const scoreElement = document.getElementById('score');
+      scoreElement.textContent = `Je hebt ${score} eenhoorns`;
+      if (score >= 100) {
+        showVictory();
+      }
+    }
+
+    function showEenhoorns() {
+      const container = document.getElementById('eenhoornsContainer');
+      container.innerHTML = '';
+      for (let i = 0; i < score; i++) {
+        const eenhoorn = document.createElement('div');
+        eenhoorn.className = 'eenhoorn';
+        eenhoorn.textContent = '🦄';
+        eenhoorn.style.animationDelay = `${i * 0.05}s`;
+        container.appendChild(eenhoorn);
+      }
+    }
+
+    function addEenhoorns(count) {
+      const container = document.getElementById('eenhoornsContainer');
+      const currentCount = score;
+      score = Math.max(0, score + count);
+      updateScore();
+      
+      // Animate new unicorns appearing
+      for (let i = currentCount; i < score; i++) {
+        setTimeout(() => {
+          const eenhoorn = document.createElement('div');
+          eenhoorn.className = 'eenhoorn';
+          eenhoorn.textContent = '🦄';
+          container.appendChild(eenhoorn);
+        }, (i - currentCount) * 100);
+      }
+    }
+
+    function removeEenhoorns(count) {
+      const container = document.getElementById('eenhoornsContainer');
+      const removeCount = Math.min(count, score);
+      const newScore = Math.max(0, score - removeCount);
+      
+      // Animate unicorns leaving
+      const eenhoorns = container.querySelectorAll('.eenhoorn');
+      for (let i = 0; i < removeCount && i < eenhoorns.length; i++) {
+        setTimeout(() => {
+          const eenhoorn = eenhoorns[eenhoorns.length - 1 - i];
+          eenhoorn.classList.add('leaving');
+          setTimeout(() => {
+            if (eenhoorn.parentNode) {
+              eenhoorn.remove();
+            }
+          }, 500);
+        }, i * 100);
+      }
+      
+      score = newScore;
+      updateScore();
+    }
+
+    function generateAdditionProblem() {
+      // Generate two numbers that sum to at most 25
+      const maxSum = 25;
+      const num1 = randomInt(1, Math.floor(maxSum / 2));
+      const num2 = randomInt(1, maxSum - num1);
+      currentAnswer = num1 + num2;
+      
+      const vraagDiv = document.getElementById('vraag');
+      vraagDiv.innerHTML = `
+        <div class="vraag-type">Som opgave</div>
+        <div style="font-size: 1.2em;">${num1} + ${num2} = ?</div>
+      `;
+      
+      document.getElementById('visualCounting').style.display = 'none';
+      problemType = 'addition';
+    }
+
+    function generateVisualCountingProblem() {
+      // Generate a number between 1 and 25 for visual counting
+      currentAnswer = randomInt(1, 25);
+      
+      const vraagDiv = document.getElementById('vraag');
+      vraagDiv.innerHTML = `
+        <div class="vraag-type">Tel de eenhoorns</div>
+        <div>Hoeveel eenhoorns zie je hieronder?</div>
+      `;
+      
+      // Display unicorns to count in groups of maximum 5
+      const visualDiv = document.getElementById('visualCounting');
+      visualDiv.innerHTML = '';
+      visualDiv.style.display = 'flex';
+      
+      // Create groups of maximum 5 unicorns
+      let remaining = currentAnswer;
+      while (remaining > 0) {
+        const groupSize = Math.min(5, remaining);
+        const group = document.createElement('div');
+        group.className = 'visual-group';
+        
+        for (let i = 0; i < groupSize; i++) {
+          const eenhoorn = document.createElement('div');
+          eenhoorn.className = 'visual-eenhoorn';
+          eenhoorn.textContent = '🦄';
+          group.appendChild(eenhoorn);
+        }
+        
+        visualDiv.appendChild(group);
+        remaining -= groupSize;
+      }
+      
+      problemType = 'visual';
+    }
+
+    function generateProblem() {
+      // Alternate between addition and visual counting
+      isAdditionProblem = !isAdditionProblem;
+      
+      if (isAdditionProblem) {
+        generateAdditionProblem();
+      } else {
+        generateVisualCountingProblem();
+      }
+      
+      document.getElementById('antwoord').value = '';
+      document.getElementById('antwoord').style.display = '';
+      document.getElementById('checkBtn').style.display = '';
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('feedback').className = 'feedback';
+      setTimeout(() => {
+        document.getElementById('antwoord').focus();
+      }, 100);
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(document.getElementById('antwoord').value, 10);
+      
+      if (isNaN(userAnswer)) {
+        document.getElementById('feedback').textContent = 'Voer een getal in!';
+        document.getElementById('feedback').className = 'feedback incorrect';
+        return;
+      }
+      
+      if (userAnswer === currentAnswer) {
+        // Correct answer - unicorns join
+        const gained = randomInt(2, 5); // Gain 2-5 unicorns
+        addEenhoorns(gained);
+        document.getElementById('feedback').textContent = `Goed gedaan! Je krijgt ${gained} eenhoorns erbij!`;
+        document.getElementById('feedback').className = 'feedback correct';
+        vuurwerk();
+        
+        // Check for victory
+        if (score >= 100) {
+          return; // Victory screen will show
+        }
+        
+        // Continue to next problem after a delay
+        setTimeout(() => {
+          generateProblem();
+        }, 2000);
+      } else {
+        // Wrong answer - unicorns leave
+        const lost = randomInt(1, 3); // Lose 1-3 unicorns
+        removeEenhoorns(lost);
+        document.getElementById('feedback').textContent = `Helaas, het juiste antwoord was ${currentAnswer}. Je verliest ${lost} eenhoorn${lost > 1 ? 's' : ''}.`;
+        document.getElementById('feedback').className = 'feedback incorrect';
+        
+        // Continue to next problem after a delay
+        setTimeout(() => {
+          generateProblem();
+        }, 2000);
+      }
+    }
+
+    function showVictory() {
+      document.getElementById('victory').classList.add('show');
+      vuurwerk();
+      // Keep fireworks going for victory
+      setTimeout(() => {
+        vuurwerk();
+      }, 1000);
+      setTimeout(() => {
+        vuurwerk();
+      }, 2000);
+    }
+
+    // Firework animation (similar to rainbow game)
+    function vuurwerk() {
+      const canvas = document.getElementById('fireworkCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.display = 'block';
+      
+      const colors = ['#ff6b9d', '#c44569', '#f8b500', '#c0392b', '#8e44ad', '#3498db', '#1abc9c', '#f39c12'];
+      
+      let fireworks = [];
+      for (let i = 0; i < 5; i++) {
+        const x = randomInt(canvas.width * 0.2, canvas.width * 0.8);
+        const y = randomInt(canvas.height * 0.2, canvas.height * 0.5);
+        const color = colors[randomInt(0, colors.length - 1)];
+        let particles = [];
+        for (let j = 0; j < 30; j++) {
+          const angle = (Math.PI * 2) * (j / 30);
+          const speed = Math.random() * 4 + 2;
+          particles.push({
+            x: x, y: y,
+            dx: Math.cos(angle) * speed,
+            dy: Math.sin(angle) * speed,
+            color: color,
+            alpha: 1
+          });
+        }
+        fireworks.push(particles);
+      }
+      
+      let frame = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let done = true;
+        for (let f of fireworks) {
+          for (let p of f) {
+            if (p.alpha > 0.05) {
+              done = false;
+              ctx.globalAlpha = p.alpha;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+              ctx.fillStyle = p.color;
+              ctx.fill();
+              p.x += p.dx;
+              p.y += p.dy;
+              p.dy += 0.05; // gravity
+              p.alpha *= 0.96;
+            }
+          }
+        }
+        ctx.globalAlpha = 1;
+        frame++;
+        if (!done && frame < 80) {
+          requestAnimationFrame(animate);
+        } else {
+          canvas.style.display = 'none';
+        }
+      }
+      animate();
+    }
+
+    // Event listeners
+    document.getElementById('startBtn').onclick = function() {
+      this.style.display = 'none';
+      score = 0;
+      updateScore();
+      showEenhoorns();
+      generateProblem();
+    };
+
+    document.getElementById('checkBtn').onclick = checkAnswer;
+
+    document.getElementById('antwoord').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        checkAnswer();
+      }
+    });
+  </script>
+</body>
+
+</html>
+
