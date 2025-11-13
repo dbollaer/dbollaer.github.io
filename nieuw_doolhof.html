@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Doolhof Avontuur</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 20px;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: #fffbe7;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #ccc;
+      padding: 20px;
+      margin-right: 30px;
+    }
+
+    .sidebar h2 {
+      font-size: 1.2em;
+      margin-top: 0;
+    }
+
+    .figures {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .figure-choice {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: border 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      background: white;
+    }
+
+    .figure-choice.selected {
+      border: 3px solid #ff69b4;
+      background: #ffe6f0;
+    }
+
+    .figure-choice.used {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .players {
+      margin-bottom: 20px;
+    }
+
+    .player {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 5px;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .player.active {
+      background: #ffe6f0;
+      border: 2px solid #ff69b4;
+    }
+
+    .player-emoji {
+      font-size: 1.5em;
+      margin-right: 10px;
+    }
+
+    .items-list {
+      margin-top: 20px;
+    }
+
+    .items-list ul {
+      padding-left: 18px;
+    }
+
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .maze {
+      display: grid;
+      grid-template-columns: repeat(20, 25px);
+      grid-template-rows: repeat(20, 25px);
+      gap: 1px;
+      background: #333;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #bbb;
+      padding: 10px;
+      max-height: 600px;
+      overflow: auto;
+    }
+
+    .cell {
+      width: 25px;
+      height: 25px;
+      background: #fff;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8em;
+      position: relative;
+    }
+
+    .cell.wall {
+      background: #333;
+    }
+
+    .cell.path {
+      background: #e8f5e8;
+    }
+
+    .cell.special {
+      background: #ffe4e1;
+    }
+
+    .cell.finish {
+      background: #ffe066;
+    }
+
+    .cell.start {
+      background: #ffebee;
+    }
+
+    .player-token {
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      font-size: 0.9em;
+      z-index: 10;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dice-btn {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #a3e635;
+      color: #333;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .directions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .arrow-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .arrow-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #bbb;
+      background: #fff;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .arrow-btn:disabled {
+      background: #eee;
+      cursor: not-allowed;
+    }
+
+    .arrow-btn:hover:not(:disabled) {
+      background: #f0f0f0;
+    }
+
+    /* Disco party styling */
+    .disco-party {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff, #ffff00, #ff00ff, #00ffff);
+      background-size: 400% 400%;
+      animation: disco 1s ease-in-out infinite;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    @keyframes disco {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: #ff0000;
+      animation: confetti-fall 3s linear infinite;
+      z-index: 1001;
+      pointer-events: none;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .cadeau-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      z-index: 1002;
+      text-align: center;
+    }
+
+    .cadeau-popup button {
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+
+    .disco-btn {
+      background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);
+      color: white;
+    }
+
+    .steps-btn {
+      background: #a3e635;
+      color: #333;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 style="text-align:center; color:#ff69b4;">Doolhof Avontuur</h1>
+  <p style="text-align:center;">Kies je figuurtje, gooi de dobbelsteen, kies je pad en verzamel cadeautjes en eten!</p>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Kies je figuurtje:</h2>
+      <div class="figures" id="figure-choices">
+        <div class="figure-choice" data-figure="kat">🐱</div>
+        <div class="figure-choice" data-figure="eenhoorn">🦄</div>
+        <div class="figure-choice" data-figure="hond">🐕</div>
+        <div class="figure-choice" data-figure="konijn">🐰</div>
+      </div>
+      <div class="players" id="players-list">
+        <h2>Spelers:</h2>
+      </div>
+      <div class="items-list">
+        <h2>Cadeautjes</h2>
+        <ul id="gift-list"></ul>
+        <h2>Eten</h2>
+        <ul id="food-list"></ul>
+      </div>
+    </div>
+    <div class="game-area">
+      <div class="maze" id="maze"></div>
+      <div class="controls">
+        <button class="dice-btn" id="roll-dice">Gooi de dobbelsteen 🎲</button>
+        <div id="dice-result" style="font-size:1.5em; margin:8px 0;"></div>
+        <div class="directions">
+          <div class="arrow-row">
+            <button class="arrow-btn" id="arrow-up" title="Omhoog">⬆️</button>
+          </div>
+          <div class="arrow-row">
+            <button class="arrow-btn" id="arrow-left" title="Links">⬅️</button>
+            <button class="arrow-btn" id="arrow-down" title="Omlaag">⬇️</button>
+            <button class="arrow-btn" id="arrow-right" title="Rechts">➡️</button>
+          </div>
+        </div>
+        <p style="font-size:0.9em; color:#666; margin-top:10px;">Gebruik ook de pijltjes op je toetsenbord!</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    // --- Spelers ---
+    const players = [];
+    const maxPlayers = 4;
+    let currentPlayerIndex = 0;
+
+    const figureEmojis = {
+      'kat': '🐱',
+      'eenhoorn': '🦄',
+      'hond': '🐕',
+      'konijn': '🐰'
+    };
+
+    // --- Figuurkeuze ---
+    const figures = document.querySelectorAll('#figure-choices .figure-choice');
+    figures.forEach(fig => {
+      fig.addEventListener('click', () => {
+        if (fig.classList.contains('used')) return;
+        if (players.length >= maxPlayers) {
+          alert('Maximum aantal spelers bereikt!');
+          return;
+        }
+
+        const figureType = fig.dataset.figure;
+        const newPlayer = {
+          id: players.length,
+          figure: figureType,
+          emoji: figureEmojis[figureType],
+          position: [0, 0],
+          gifts: [],
+          food: [],
+          stepsLeft: 0
+        };
+
+        players.push(newPlayer);
+        fig.classList.add('used');
+        updatePlayersList();
+        drawMaze();
+
+        if (players.length === 1) {
+          // Eerste speler is automatisch actief
+          currentPlayerIndex = 0;
+          updateActivePlayer();
+        }
+      });
+    });
+
+    function updatePlayersList() {
+      const playersList = document.getElementById('players-list');
+      const h2 = playersList.querySelector('h2');
+      playersList.innerHTML = '';
+      playersList.appendChild(h2);
+
+      players.forEach((player, index) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player';
+        if (index === currentPlayerIndex) playerDiv.classList.add('active');
+        playerDiv.innerHTML = `
+                    <span class="player-emoji">${player.emoji}</span>
+                    <span>Speler ${index + 1} (${player.figure})</span>
+                `;
+        playersList.appendChild(playerDiv);
+      });
+    }
+
+    function updateActivePlayer() {
+      updatePlayersList();
+      updateDirectionButtons();
+    }
+
+    // --- Maze genereren ---
+    const mazeSize = 20;
+    const maze = [];
+
+    // Initialiseer maze met muren
+    for (let y = 0; y < mazeSize; y++) {
+      maze[y] = [];
+      for (let x = 0; x < mazeSize; x++) {
+        maze[y][x] = { type: 'wall', special: null };
+      }
+    }
+
+    // Genereer doolhof met meerdere paden
+    function generateMaze() {
+      // Start met een grid van muren
+      for (let y = 0; y < mazeSize; y++) {
+        for (let x = 0; x < mazeSize; x++) {
+          maze[y][x] = { type: 'wall', special: null };
+        }
+      }
+
+      // Plaats start en finish
+      maze[0][0] = { type: 'start', special: null };
+      maze[mazeSize - 1][mazeSize - 1] = { type: 'finish', special: 'picnickmandje' };
+
+      // Genereer hoofdpad met minimaal 50 stappen (voor 20x20)
+      let path = generateMainPath(50);
+
+      // Voeg extra paden toe voor een echt doolhof
+      addExtraPaths();
+
+      // Plaats speciale vakjes
+      placeSpecialsOnPath(path, 'boek', 8);
+      placeSpecialsOnPath(path, 'cadeau', 8);
+      placeSpecialsOnPath(path, 'cadeaumonster', 4);
+      placeSpecialsOnPath(path, 'eten', 8);
+      placeSpecialsOnPath(path, 'cookiemonster', 4);
+    }
+
+    function generateMainPath(minLength) {
+      let path = [[0, 0]];
+      let visited = Array.from({ length: mazeSize }, () => Array(mazeSize).fill(false));
+      visited[0][0] = true;
+      let x = 0, y = 0;
+      let steps = 0;
+
+      while (steps < minLength) {
+        let options = [];
+        if (x > 0 && !visited[y][x - 1]) options.push([-1, 0]);
+        if (x < mazeSize - 1 && !visited[y][x + 1]) options.push([1, 0]);
+        if (y > 0 && !visited[y - 1][x]) options.push([0, -1]);
+        if (y < mazeSize - 1 && !visited[y + 1][x]) options.push([0, 1]);
+
+        if (options.length === 0) break;
+
+        let [dx, dy] = options[Math.floor(Math.random() * options.length)];
+        x += dx; y += dy;
+        path.push([x, y]);
+        visited[y][x] = true;
+        maze[y][x] = { type: 'path', special: null };
+        steps++;
+      }
+
+      // Verbind naar finish
+      while (x !== mazeSize - 1 || y !== mazeSize - 1) {
+        if (x < mazeSize - 1) x++;
+        else if (y < mazeSize - 1) y++;
+        path.push([x, y]);
+        visited[y][x] = true;
+        if (maze[y][x].type === 'wall') {
+          maze[y][x] = { type: 'path', special: null };
+        }
+      }
+
+      return path;
+    }
+
+    function addExtraPaths() {
+      // Voeg wat extra paden toe voor een echt doolhof gevoel
+      for (let i = 0; i < 30; i++) {
+        let x = Math.floor(Math.random() * (mazeSize - 2)) + 1;
+        let y = Math.floor(Math.random() * (mazeSize - 2)) + 1;
+
+        if (maze[y][x].type === 'wall') {
+          // Maak een kort pad
+          let length = Math.floor(Math.random() * 3) + 2;
+          for (let j = 0; j < length; j++) {
+            let dx = Math.floor(Math.random() * 3) - 1;
+            let dy = Math.floor(Math.random() * 3) - 1;
+            let nx = x + dx, ny = y + dy;
+
+            if (nx >= 0 && nx < mazeSize && ny >= 0 && ny < mazeSize &&
+              maze[ny][nx].type === 'wall') {
+              maze[ny][nx] = { type: 'path', special: null };
+              x = nx; y = ny;
+            }
+          }
+        }
+      }
+    }
+
+    function placeSpecialsOnPath(path, type, count) {
+      let placed = 0;
+      while (placed < count) {
+        let idx = Math.floor(Math.random() * (path.length - 2)) + 1;
+        let [x, y] = path[idx];
+        if (!maze[y][x].special) {
+          maze[y][x].special = type;
+          placed++;
+        }
+      }
+    }
+
+    // Genereer het doolhof
+    generateMaze();
+
+    // --- Maze tekenen ---
+    const mazeDiv = document.getElementById('maze');
+    function getCellIcon(cell) {
+      if (cell.type === 'start') return '🚩';
+      if (cell.type === 'finish') return '🧺';
+      if (cell.special === 'boek') return '📚';
+      if (cell.special === 'cadeau') return '🎁';
+      if (cell.special === 'cadeaumonster') return '👾';
+      if (cell.special === 'eten') return '🍎';
+      if (cell.special === 'cookiemonster') return '🍪';
+      if (cell.special === 'picnickmandje') return '🧺';
+      return '';
+    }
+
+    function drawMaze() {
+      mazeDiv.innerHTML = '';
+      for (let y = 0; y < mazeSize; y++) {
+        for (let x = 0; x < mazeSize; x++) {
+          const cell = maze[y][x];
+          const div = document.createElement('div');
+          div.className = 'cell';
+
+          if (cell.type === 'wall') div.classList.add('wall');
+          if (cell.type === 'path') div.classList.add('path');
+          if (cell.type === 'start') div.classList.add('start');
+          if (cell.type === 'finish') div.classList.add('finish');
+          if (cell.special) div.classList.add('special');
+
+          div.textContent = getCellIcon(cell);
+
+          // Voeg speler tokens toe
+          players.forEach((player, index) => {
+            if (player.position[0] === x && player.position[1] === y) {
+              const token = document.createElement('div');
+              token.className = 'player-token';
+              token.textContent = player.emoji;
+              token.style.left = (index * 4) + 'px';
+              token.style.top = (index * 4) + 'px';
+              div.appendChild(token);
+            }
+          });
+
+          mazeDiv.appendChild(div);
+        }
+      }
+    }
+
+    // --- Richtingknoppen ---
+    function updateDirectionButtons() {
+      if (players.length === 0) return;
+
+      const currentPlayer = players[currentPlayerIndex];
+      const [x, y] = currentPlayer.position;
+
+      document.getElementById('arrow-up').disabled = !(y > 0 && maze[y - 1][x].type !== 'wall');
+      document.getElementById('arrow-down').disabled = !(y < mazeSize - 1 && maze[y + 1][x].type !== 'wall');
+      document.getElementById('arrow-left').disabled = !(x > 0 && maze[y][x - 1].type !== 'wall');
+      document.getElementById('arrow-right').disabled = !(x < mazeSize - 1 && maze[y][x + 1].type !== 'wall');
+    }
+
+    // --- Toetsenbord pijltjes ---
+    document.addEventListener('keydown', (event) => {
+      if (players.length === 0) return;
+
+      const currentPlayer = players[currentPlayerIndex];
+      if (currentPlayer.stepsLeft <= 0) return;
+
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          movePlayer(0, -1);
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          movePlayer(0, 1);
+          break;
+        case 'ArrowLeft':
+          event.preventDefault();
+          movePlayer(-1, 0);
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          movePlayer(1, 0);
+          break;
+      }
+    });
+
+    // --- Dobbelsteen ---
+    document.getElementById('roll-dice').addEventListener('click', () => {
+      if (players.length === 0) {
+        alert('Voeg eerst spelers toe!');
+        return;
+      }
+
+      const currentPlayer = players[currentPlayerIndex];
+      if (currentPlayer.stepsLeft > 0) {
+        alert('Je moet eerst je stappen zetten!');
+        return;
+      }
+
+      currentPlayer.stepsLeft = Math.floor(Math.random() * 6) + 1;
+      document.getElementById('dice-result').textContent =
+        `${currentPlayer.figure} mag ${currentPlayer.stepsLeft} stap${currentPlayer.stepsLeft > 1 ? 'pen' : ''} zetten!`;
+      updateDirectionButtons();
+    });
+
+    // --- Disco party functies ---
+    function createDiscoParty() {
+      // Muziek geluid (simulatie)
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+      audio.volume = 0.3;
+      audio.play().catch(() => { }); // Ignore errors if audio fails
+
+      // Disco achtergrond
+      const disco = document.createElement('div');
+      disco.className = 'disco-party';
+      document.body.appendChild(disco);
+
+      // Confetti
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + 'vw';
+          confetti.style.backgroundColor = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'][Math.floor(Math.random() * 6)];
+          confetti.style.animationDelay = Math.random() * 2 + 's';
+          document.body.appendChild(confetti);
+
+          setTimeout(() => confetti.remove(), 3000);
+        }, i * 100);
+      }
+
+      // Stop disco na 3 seconden
+      setTimeout(() => {
+        disco.remove();
+      }, 3000);
+    }
+
+    function showCadeauChoice(player) {
+      const popup = document.createElement('div');
+      popup.className = 'cadeau-popup';
+      popup.innerHTML = `
+                <h3>🎁 Cadeau gevonden! 🎁</h3>
+                <p>${player.figure} vindt een cadeau! Wat wil je doen?</p>
+                <button class="disco-btn" onclick="chooseDisco()">🎉 Disco Party!</button>
+                <button class="steps-btn" onclick="chooseSteps()">➕ 2 Extra Stappen</button>
+            `;
+      document.body.appendChild(popup);
+
+      window.chooseDisco = () => {
+        popup.remove();
+        createDiscoParty();
+        alert(`${player.figure} krijgt een disco party! 🎉`);
+      };
+
+      window.chooseSteps = () => {
+        popup.remove();
+        player.stepsLeft += 2;
+        document.getElementById('dice-result').textContent =
+          `${player.figure} krijgt 2 extra stappen! Nu ${player.stepsLeft} stappen.`;
+        updateDirectionButtons();
+      };
+    }
+
+    // --- Richting kiezen ---
+    function movePlayer(dx, dy) {
+      if (players.length === 0) return;
+
+      const currentPlayer = players[currentPlayerIndex];
+      if (currentPlayer.stepsLeft <= 0) return;
+
+      const [x, y] = currentPlayer.position;
+      const nx = x + dx, ny = y + dy;
+
+      if (nx < 0 || nx >= mazeSize || ny < 0 || ny >= mazeSize) return;
+      if (maze[ny][nx].type === 'wall') return;
+
+      currentPlayer.position = [nx, ny];
+      currentPlayer.stepsLeft--;
+
+      // Check speciale vakjes
+      const cell = maze[ny][nx];
+      if (cell.special) {
+        handleSpecialCell(cell.special, currentPlayer);
+      }
+
+      // Check winnaar
+      if (nx === mazeSize - 1 && ny === mazeSize - 1) {
+        alert(`🎉 ${currentPlayer.figure} heeft gewonnen! 🎉`);
+        return;
+      }
+
+      drawMaze();
+      updateDirectionButtons();
+
+      if (currentPlayer.stepsLeft === 0) {
+        document.getElementById('dice-result').textContent = '';
+        // Volgende speler
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        updateActivePlayer();
+      }
+    }
+
+    function handleSpecialCell(special, player) {
+      switch (special) {
+        case 'boek':
+          alert(`${player.figure} vindt een boek! 📚\nJe krijgt een oefening!`);
+          break;
+        case 'cadeau':
+          player.gifts.push('🎁');
+          showCadeauChoice(player);
+          break;
+        case 'cadeaumonster':
+          player.gifts = [];
+          alert(`${player.figure} ontmoet het cadeaumonster! 👾\nJe verliest alle cadeautjes!`);
+          break;
+        case 'eten':
+          player.food.push('🍎');
+          alert(`${player.figure} vindt eten! 🍎\nTeken het of snijd het in stukjes!`);
+          break;
+        case 'cookiemonster':
+          player.food = [];
+          alert(`${player.figure} ontmoet het cookiemonster! 🍪\nJe verliest al je eten!`);
+          break;
+      }
+      updateItemsList();
+    }
+
+    function updateItemsList() {
+      if (players.length === 0) return;
+
+      const currentPlayer = players[currentPlayerIndex];
+      const giftList = document.getElementById('gift-list');
+      const foodList = document.getElementById('food-list');
+
+      giftList.innerHTML = currentPlayer.gifts.map(gift => `<li>${gift}</li>`).join('');
+      foodList.innerHTML = currentPlayer.food.map(food => `<li>${food}</li>`).join('');
+    }
+
+    document.getElementById('arrow-up').addEventListener('click', () => movePlayer(0, -1));
+    document.getElementById('arrow-down').addEventListener('click', () => movePlayer(0, 1));
+    document.getElementById('arrow-left').addEventListener('click', () => movePlayer(-1, 0));
+    document.getElementById('arrow-right').addEventListener('click', () => movePlayer(1, 0));
+
+    // Initialiseer
+    drawMaze();
+  </script>
+</body>
+
+</html>

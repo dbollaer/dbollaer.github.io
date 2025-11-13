@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Doolhof Ganzenbord Spel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+    }
+
+    #game-container {
+      display: flex;
+      flex-direction: row;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    #sidebar {
+      width: 250px;
+    }
+
+    #board {
+      border: 2px solid #333;
+      background: #fff;
+    }
+
+    .character-select img {
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      margin: 5px;
+    }
+
+    .character-select img.selected {
+      border: 2px solid #007bff;
+    }
+
+    #dice {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+
+    #fireworks {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .scoreboard {
+      margin: 10px 0;
+    }
+
+    .bonus-question {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Doolhof Ganzenbord Spel</h1>
+  <div id="game-container">
+    <div id="sidebar">
+      <h2>Kies je personage</h2>
+      <div class="character-select" id="character-select">
+        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f436.png" alt="Hond"
+          data-char="hond">
+        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f408.png" alt="Kat" data-char="kat">
+        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f984.png" alt="Eenhoorn"
+          data-char="eenhoorn">
+        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f43b.png" alt="Beer"
+          data-char="beer">
+      </div>
+      <div class="scoreboard" id="scoreboard"></div>
+      <div id="dice"></div>
+      <button id="roll-btn">Gooi dobbelstenen</button>
+      <div class="bonus-question" id="bonus-question"></div>
+      <div id="fireworks">🎆🎇 VUURWERK! 🎇🎆</div>
+    </div>
+    <canvas id="board" width="600" height="600"></canvas>
+  </div>
+  <script>
+    // Spelvariabelen
+    const boardSize = 100;
+    const boardCols = 10;
+    const boardRows = 10;
+    const cellSize = 60;
+    const bonusFields = [];
+    const bonusCount = 30 ; // aantal bonusvelden
+    const bonusTypes = ['positive', 'negative'];
+    const bonusColors = { positive: '#7CFC98', negative: '#FF7C7C' };
+    const playerColors = ['#007bff', '#ff9800'];
+    const characters = {
+      hond: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f436.png',
+      kat: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f408.png',
+      eenhoorn: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f984.png',
+      beer: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f43b.png',
+    };
+    const picnicImg = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f96a.png'; // picknickmand
+
+    let players = [
+      { name: 'Speler 1', pos: 0, char: null },
+      { name: 'Speler 2', pos: 0, char: null }
+    ];
+    let currentPlayer = 0;
+    let gameStarted = false;
+    let gameOver = false;
+    let diceVals = [1, 1];
+    let solvingBonus = false;
+    let currentBonus = null;
+
+    // Canvas setup
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+
+    // UI elementen
+    const charSelect = document.getElementById('character-select');
+    const scoreboard = document.getElementById('scoreboard');
+    const diceDiv = document.getElementById('dice');
+    const rollBtn = document.getElementById('roll-btn');
+    const bonusDiv = document.getElementById('bonus-question');
+    const fireworksDiv = document.getElementById('fireworks');
+
+    // Helper: random int
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Genereer bonusvelden
+    function generateBonuses() {
+      let used = new Set();
+      while (bonusFields.length < bonusCount) {
+        let idx = randInt(3, boardSize - 2); // niet op start/eind
+        if (!used.has(idx)) {
+          let type = bonusTypes[randInt(0, 1)];
+          bonusFields.push({ idx, type });
+          used.add(idx);
+        }
+      }
+    }
+
+    // Bord tekenen
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Ganzenbord-patroon (zigzag)
+      for (let i = 0; i < boardSize; i++) {
+        let row = Math.floor(i / boardCols);
+        let col = row % 2 === 0 ? i % boardCols : boardCols - 1 - (i % boardCols);
+        let x = col * cellSize;
+        let y = (boardRows - 1 - row) * cellSize;
+        ctx.strokeStyle = '#333';
+        ctx.strokeRect(x, y, cellSize, cellSize);
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#222';
+        ctx.fillText(i + 1, x + 5, y + 20);
+        // Bonusvelden
+        let bonus = bonusFields.find(b => b.idx === i + 1);
+        if (bonus) {
+          ctx.fillStyle = bonusColors[bonus.type];
+          ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+          ctx.fillStyle = '#222';
+          ctx.fillText(bonus.type === 'positive' ? '+?' : '-?', x + cellSize / 2 - 10, y + cellSize / 2 + 8);
+        }
+      }
+      // Picknickmand op veld 100
+      let endRow = Math.floor((boardSize - 1) / boardCols);
+      let endCol = endRow % 2 === 0 ? (boardSize - 1) % boardCols : boardCols - 1 - ((boardSize - 1) % boardCols);
+      let endX = endCol * cellSize;
+      let endY = (boardRows - 1 - endRow) * cellSize;
+      let img = new window.Image();
+      img.src = picnicImg;
+      img.onload = () => {
+        ctx.drawImage(img, endX + 8, endY + 8, cellSize - 16, cellSize - 16);
+      };
+      // Spelers tekenen
+      players.forEach((p, idx) => {
+        if (!p.char) return;
+        let pos = Math.min(p.pos, boardSize - 1);
+        let row = Math.floor(pos / boardCols);
+        let col = row % 2 === 0 ? pos % boardCols : boardCols - 1 - (pos % boardCols);
+        let x = col * cellSize + 10 + idx * 25;
+        let y = (boardRows - 1 - row) * cellSize + 30;
+        let img = new window.Image();
+        img.src = characters[p.char];
+        img.onload = () => {
+          ctx.drawImage(img, x, y, 32, 32);
+        };
+      });
+    }
+
+    // Personage kiezen
+    charSelect.addEventListener('click', e => {
+      if (gameStarted) return;
+      if (e.target.tagName === 'IMG') {
+        let imgs = charSelect.querySelectorAll('img');
+        imgs.forEach(img => img.classList.remove('selected'));
+        e.target.classList.add('selected');
+        let char = e.target.getAttribute('data-char');
+        // Toewijzen aan huidige speler
+        players[currentPlayer].char = char;
+        // Volgende speler kiezen
+        currentPlayer = (currentPlayer + 1) % 2;
+        if (players.every(p => p.char)) {
+          gameStarted = true;
+          currentPlayer = 0;
+          updateScoreboard();
+          drawBoard();
+        }
+      }
+    });
+
+    // Scorebord updaten
+    function updateScoreboard() {
+      scoreboard.innerHTML =
+        players.map((p, idx) =>
+          `<div style="color:${playerColors[idx]}">${p.name}: <img src='${characters[p.char]}' width='24'> veld ${p.pos + 1}</div>`
+        ).join('') +
+        `<div><b>Beurt:</b> <span style="color:${playerColors[currentPlayer]}">${players[currentPlayer].name}</span></div>`;
+    }
+
+    // Dobbelstenen gooien
+    rollBtn.addEventListener('click', () => {
+      if (!gameStarted || gameOver || solvingBonus) return;
+      diceVals = [randInt(1, 6), randInt(1, 6)];
+      diceDiv.innerHTML = `🎲 ${diceVals[0]} + 🎲 ${diceVals[1]} = <b>${diceVals[0] + diceVals[1]}</b>`;
+      movePlayer(diceVals[0] + diceVals[1]);
+    });
+
+    // Speler bewegen
+    function movePlayer(steps) {
+      let p = players[currentPlayer];
+      let oldPos = p.pos;
+      p.pos = Math.min(p.pos + steps, boardSize - 1);
+      updateScoreboard();
+      drawBoard();
+      // Check bonusveld
+      let bonus = bonusFields.find(b => b.idx === p.pos + 1);
+      if (bonus) {
+        solvingBonus = true;
+        currentBonus = bonus;
+        askBonusQuestion(bonus);
+      } else {
+        checkWin();
+      }
+    }
+
+    // Bonusvraag genereren
+    function askBonusQuestion(bonus) {
+      let op = randInt(0, 1) ? '+' : '-';
+      let a, b, answer;
+      if (op === '+') {
+        a = randInt(4, 25);
+        b = randInt(4, 25);
+        answer = a + b;
+        while (answer < 8 || answer > 25) {
+          a = randInt(4, 25);
+          b = randInt(4, 25);
+          answer = a + b;
+        }
+      } else {
+        a = randInt(8, 25);
+        b = randInt(4, a - 1);
+        answer = a - b;
+        while (answer < 8 || answer > 25) {
+          a = randInt(8, 25);
+          b = randInt(4, a - 1);
+          answer = a - b;
+        }
+      }
+      bonusDiv.innerHTML = `<b>Bonusveld!</b> Los op: <b>${a} ${op} ${b} = ?</b><br><input id='bonus-answer' type='number' style='width:60px'> <button id='submit-bonus'>OK</button>`;
+      document.getElementById('submit-bonus').onclick = () => {
+        let val = parseInt(document.getElementById('bonus-answer').value);
+        if (val === answer) {
+          if (bonus.type === 'positive') {
+            players[currentPlayer].pos = Math.min(players[currentPlayer].pos + randInt(2, 6), boardSize - 1);
+            bonusDiv.innerHTML = '<span style="color:green">Goed! Je mag extra vooruit!</span>';
+          } else {
+            bonusDiv.innerHTML = '<span style="color:green">Goed! Je hoeft niet terug!</span>';
+          }
+        } else {
+          if (bonus.type === 'positive') {
+            bonusDiv.innerHTML = '<span style="color:red">Fout! Geen extra stappen.</span>';
+          } else {
+            let terug = randInt(2, 6);
+            players[currentPlayer].pos = Math.max(players[currentPlayer].pos - terug, 0);
+            bonusDiv.innerHTML = `<span style='color:red'>Fout! Je moet ${terug} stappen terug.</span>`;
+          }
+        }
+        updateScoreboard();
+        drawBoard();
+        setTimeout(() => {
+          bonusDiv.innerHTML = '';
+          solvingBonus = false;
+          checkWin();
+        }, 1200);
+      };
+    }
+
+    // Winconditie
+    function checkWin() {
+      if (players[currentPlayer].pos >= boardSize - 1) {
+        gameOver = true;
+        showPicnic();
+        return;
+      }
+      // Volgende speler
+      currentPlayer = (currentPlayer + 1) % 2;
+      updateScoreboard();
+    }
+
+    // Picknickmand openen
+    function showPicnic() {
+      bonusDiv.innerHTML = `<div style='font-size:2em'>🥪 🧺 <b>${players[currentPlayer].name} opent de picknickmand!</b> 🧺 🥪<br><img src='${picnicImg}' width='100'></div>`;
+      rollBtn.disabled = true;
+    }
+
+    // Init
+    function init() {
+      generateBonuses();
+      drawBoard();
+      updateScoreboard();
+    }
+    init();
+  </script>
+</body>
+
+</html>

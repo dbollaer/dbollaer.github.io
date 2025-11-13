@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dobbelstenen Naamspel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 30px;
+    }
+
+    .dice-container {
+      display: flex;
+      gap: 30px;
+      margin: 30px 0 10px 0;
+    }
+
+    .dice {
+      width: 70px;
+      height: 70px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    button {
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      border: none;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      margin: 20px 0 10px 0;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .naam {
+      font-size: 1.5rem;
+      margin: 20px 0 10px 0;
+      min-height: 32px;
+    }
+
+    .input-container {
+      margin: 10px 0;
+    }
+
+    input[type="text"] {
+      font-size: 1.1rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+    }
+
+    .feedback {
+      font-size: 1.2rem;
+      margin: 10px 0;
+      min-height: 28px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Dobbelstenen Naamspel</h1>
+  <div class="dice-container">
+    <div class="dice" id="dice1">🎲</div>
+    <div class="dice" id="dice2">🎲</div>
+  </div>
+  <button id="rollBtn">Gooi dobbelstenen</button>
+  <div class="naam" id="naamDisplay"></div>
+  <div id="fullNameExample"
+    style="font-size:2.2rem; margin:18px 0; font-family:'Patrick Hand', 'Comic Sans MS', cursive;"></div>
+  <div id="handwrittenName" style="font-size:2.2rem; margin:18px 0; display:flex; gap:8px;"></div>
+  <button id="repeatBtn" style="display:none; margin-bottom:10px;">Herhaal naam</button>
+  <div class="input-container">
+    <canvas id="drawCanvas" width="200" height="200"
+      style="border:1px solid #bbb; background:#fff; touch-action:none;"></canvas>
+    <br>
+    <button id="clearBtn" style="margin-top:6px;">Wissen</button>
+    <button id="nextBtn" disabled>Volgende letter</button>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div id="confetti"
+    style="position:fixed; left:0; top:0; width:100vw; height:100vh; pointer-events:none; z-index:1000;"></div>
+
+  <script>
+    // Namenlijst per lengte (voorbeeld, kan uitgebreid worden)
+    const namen = {
+      3: ["Jan", "Tom", "Pia", "Ine", "Leo"],
+      4: ["Sara", "Bart", "Lies", "Noor", "Gert"],
+      5: ["Marie", "Simon", "Jules", "Laura", "Sofie"],
+      6: ["Monica", "Steven", "Louise", "Jasper", "Emmaus"],
+      7: ["Martine", "Hanneli", "Gerrit", "Laurens", "Rosalie"],
+      8: ["Charlotte", "Benjamin", "Matthias", "Florence", "Mauricio"],
+      9: ["Alexander", "Sebastian", "Valentina", "Christien", "Ferdinand"],
+      10: ["Constantijn", "Anastasia", "Frederique", "Maximilien", "Bernadette"]
+    };
+
+    const dice1 = document.getElementById('dice1');
+    const dice2 = document.getElementById('dice2');
+    const rollBtn = document.getElementById('rollBtn');
+    const naamDisplay = document.getElementById('naamDisplay');
+    const fullNameExample = document.getElementById('fullNameExample');
+    const handwrittenName = document.getElementById('handwrittenName');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const clearBtn = document.getElementById('clearBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const repeatBtn = document.getElementById('repeatBtn');
+    const feedback = document.getElementById('feedback');
+    const ctx = drawCanvas.getContext('2d');
+    let gekozenNaam = '';
+    let letterIndex = 0;
+    let letterImages = [];
+    let hue = 0;
+    let drawing = false;
+    let lastX = 0, lastY = 0;
+
+    function resetAll() {
+      gekozenNaam = '';
+      letterIndex = 0;
+      letterImages = [];
+      fullNameExample.textContent = '';
+      handwrittenName.innerHTML = '';
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      naamDisplay.textContent = '';
+      feedback.textContent = '';
+      nextBtn.disabled = true;
+      drawCanvas.style.display = 'block';
+      clearBtn.style.display = 'inline-block';
+      nextBtn.style.display = 'inline-block';
+      repeatBtn.style.display = 'none';
+      document.getElementById('confetti').innerHTML = '';
+    }
+
+    function drawLetterExample(letter) {
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.font = '128px "Patrick Hand", "Comic Sans MS", cursive';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#333';
+      ctx.fillText(letter, drawCanvas.width / 2, drawCanvas.height / 2);
+      ctx.restore();
+    }
+
+    function showFullNameExample(name) {
+      fullNameExample.textContent = name;
+    }
+
+    function showHandwrittenName() {
+      handwrittenName.innerHTML = '';
+      for (let i = 0; i < gekozenNaam.length; i++) {
+        if (letterImages[i]) {
+          const img = document.createElement('img');
+          img.src = letterImages[i];
+          img.width = 100;
+          img.height = 100;
+          img.style.verticalAlign = 'middle';
+          handwrittenName.appendChild(img);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = gekozenNaam[i];
+          span.style.opacity = 0.3;
+          span.style.display = 'inline-block';
+          span.style.width = '100px';
+          span.style.height = '100px';
+          span.style.textAlign = 'center';
+          span.style.lineHeight = '100px';
+          handwrittenName.appendChild(span);
+        }
+      }
+    }
+
+    function startLetterWriting() {
+      letterIndex = 0;
+      letterImages = [];
+      showHandwrittenName();
+      drawLetterExample(gekozenNaam[letterIndex]);
+      nextBtn.disabled = true;
+    }
+
+    function finishAllLetters() {
+      drawCanvas.style.display = 'none';
+      clearBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      feedback.textContent = 'Goed gedaan! Dit is jouw naam:';
+      showHandwrittenName();
+      launchConfetti();
+    }
+
+    // Regenboog tekenen
+    function startDraw(e) {
+      drawing = true;
+      [lastX, lastY] = getPos(e);
+    }
+    function draw(e) {
+      if (!drawing) return;
+      const [x, y] = getPos(e);
+      ctx.strokeStyle = `hsl(${hue}, 100%, 45%)`;
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      [lastX, lastY] = [x, y];
+      hue = (hue + 3) % 360;
+      nextBtn.disabled = false;
+    }
+    function stopDraw() {
+      drawing = false;
+    }
+    function getPos(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      if (e.touches && e.touches.length) {
+        return [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
+      } else {
+        return [e.offsetX, e.offsetY];
+      }
+    }
+    drawCanvas.addEventListener('mousedown', startDraw);
+    drawCanvas.addEventListener('mousemove', draw);
+    drawCanvas.addEventListener('mouseup', stopDraw);
+    drawCanvas.addEventListener('mouseleave', stopDraw);
+    drawCanvas.addEventListener('touchstart', startDraw);
+    drawCanvas.addEventListener('touchmove', function (e) { draw(e); e.preventDefault(); }, { passive: false });
+    drawCanvas.addEventListener('touchend', stopDraw);
+
+    clearBtn.onclick = function () {
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      drawLetterExample(gekozenNaam[letterIndex]);
+      hue = 0;
+      nextBtn.disabled = true;
+    };
+
+    nextBtn.onclick = function () {
+      // Sla huidige letter op als image
+      letterImages[letterIndex] = drawCanvas.toDataURL('image/png');
+      letterIndex++;
+      if (letterIndex < gekozenNaam.length) {
+        ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        drawLetterExample(gekozenNaam[letterIndex]);
+        showHandwrittenName();
+        nextBtn.disabled = true;
+      } else {
+        finishAllLetters();
+      }
+    };
+
+    rollBtn.onclick = function () {
+      resetAll();
+      feedback.textContent = '';
+      naamDisplay.textContent = '';
+      dice1.textContent = '🎲';
+      dice2.textContent = '🎲';
+      const d1 = randomDice();
+      const d2 = randomDice();
+      dice1.textContent = diceEmoji(d1);
+      dice2.textContent = diceEmoji(d2);
+      const totaal = d1 + d2;
+      let naamLijst = namen[totaal];
+      if (!naamLijst || naamLijst.length === 0) {
+        naamDisplay.textContent = `Geen naam van ${totaal} letters beschikbaar.`;
+        return;
+      }
+      gekozenNaam = naamLijst[Math.floor(Math.random() * naamLijst.length)];
+      naamDisplay.textContent = `Naam van ${totaal} letters gekozen!`;
+      showFullNameExample(gekozenNaam);
+      startLetterWriting();
+    };
+
+    // Confetti (eenvoudig)
+    function launchConfetti() {
+      const confettiDiv = document.getElementById('confetti');
+      confettiDiv.innerHTML = '';
+      for (let i = 0; i < 120; i++) {
+        const c = document.createElement('div');
+        c.style.position = 'absolute';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.top = '-10px';
+        c.style.width = '10px';
+        c.style.height = '18px';
+        c.style.background = `hsl(${Math.random() * 360},100%,60%)`;
+        c.style.opacity = 0.8;
+        c.style.borderRadius = '3px';
+        c.style.transform = `rotate(${Math.random() * 360}deg)`;
+        c.style.transition = 'top 2.2s cubic-bezier(.23,1.02,.64,1), opacity 2.2s';
+        confettiDiv.appendChild(c);
+        setTimeout(() => {
+          c.style.top = (80 + Math.random() * 15) + 'vh';
+          c.style.opacity = 0;
+        }, 30);
+      }
+    }
+
+    // Dobbelsteen helpers
+    function randomDice() {
+      return Math.floor(Math.random() * 6) + 1;
+    }
+    function diceEmoji(n) {
+      return ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][n];
+    }
+  </script>
+</body>
+
+</html>

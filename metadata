@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://cloud.timeedit.net/ugent_sp" ID="_634e1dcfbe98c93dee5283731368ce4eeea67a42">
+  <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" AuthnRequestsSigned="true">
+    <KeyDescriptor use="signing">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <ds:X509Certificate>MIIFRzCCAy+gAwIBAgIUbcATyxl20UB/kEb9tFIvnfeCkqIwDQYJKoZIhvcNAQELBQAwTDELMAkGA1UEBhMCU0UxEzARBgNVBAcMCkdvdGhlbmJ1cmcxETAPBgNVBAoMCFRpbWVFZGl0MRUwEwYDVQQDDAxUaW1lRWRpdCBTU08wHhcNMjQwOTIzMTUwMDI3WhcNMjcxMjA3MTUwMDI3WjBMMQswCQYDVQQGEwJTRTETMBEGA1UEBwwKR290aGVuYnVyZzERMA8GA1UECgwIVGltZUVkaXQxFTATBgNVBAMMDFRpbWVFZGl0IFNTTzCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAL2SmJq/MygSwLtkBaXAYEpFJ22tnG2BtqwQPui91D8hLMuhLVe5f4QYb52xiS6xkS4NAM0lyWVggga1kNID9FYUblFpLqHKnDq7CleXs318pAcL+B0oDVM9GwiDAcm3h8vky2cu6rhRx7zm2MRZX/Fk2kt6Z9Kwh0xCrFKmUgZO1ARPr+KtSMZO7u54LcdwQ7CWO5W4cPKvOLBUbpRwqRZPRVRM4Y11zq4Iby0XZHkTLjRqvbbasxTZVLPMfXQ8yoMvLFOKXI3KPnb0g6XctRzd1HrMqEbYQQKpQckxh4Y9XOvFC8Kerxp8FUfpFOZMjDmjub0DqDsMxb5E4Y/w3j3cuWzrpQ0E5B7R0grKkp5+tasmjkdmxaxeuw4F5FHpdCsigenyIa/QQGU0vYojA/Kq9YeeS0mF+KYcIJdHOG+9vBV47x3yLLn3aPbt4aLuVqcrAsi9TwMkyiqS2Ags1qemPV6VSqXog0Fz/zKFK/55s9xpdFbUx3CyjyANVprPOHRQsXdBAhedM2qb1orxq+z3jbBA+NFPeOeLSxTzQbWznOiGBtTXYOJBv2wcLKjYUIsF+U0y0eJhmFP/MKgBXDyGN9UEu/5aDR/Pyhz6wCiDPFFVAlz1JWKUfSZuxt0FxJSwRWyOaJPIBO3CrOOAOFmHN1Egg+6g2dqSHT0yWceLAgMBAAGjITAfMB0GA1UdDgQWBBQf2NiRRDiwMbDX/xMNULXIhWU7bTANBgkqhkiG9w0BAQsFAAOCAgEAbMF98k9TZmiH2OtAWq1ulR9clLQQeacQSjfOJagoXSvITRwGx3NF20RNI+v3VFYuJk3/ZR1Fy2jhI2ObRJJ/BIZm72dpXwzxKC8P99q8NQRB7YhegZDRcrijW+LhxZewsWhJx7nDMAwI0aTsdsrtYytmk5ji1REzQrdF07x8JiDDDC8xOG+roRyazQCfKvrNmpYdJXv3RGP+5qqPt/jYVN/PcVd4rYp/9HNko8ehD60Cpe0qvEhpKXvOnQM5s307sMog0dZ9k/w+9uvzmx0e3TSENQm4xdxOsFuXp9z/MM2BopOnOlI+K25Iyywp+kP59oVVNQbUI+4ic6fH81VGNR/H3M0DZHf1tZ8CaIQWaJHusrJeRQFdJ7W0aDm8z3AReqLtETteV/04xX99noHRiOhkOt/hpwqTx5HvE+SQwdOJUa4e2ztqeJ5NlPd4ej8boU5KqdrqmOR8/lCKnaBGiETVBfoBudQ2Rht4Ppmmwm49PTEfJYLlepOdw16ilZ93lNIkVOE4An9418sGHvSWKoyT3wRRpAU1ZOdKtGBllBs7xbZSCEndgFyLmFrcLd/nE0R22CknceJYLzpG18y/1qUALQa+oTx4NS5uBia1Mh0clHOuUTPmPE+t0vPI/mmZF+Oh87JjPmzf3V98AIT1LzSZyODgDILXdB5bzDWgy7M=</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </KeyDescriptor>
+    <KeyDescriptor use="encryption">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <ds:X509Certificate>MIIFRzCCAy+gAwIBAgIUbcATyxl20UB/kEb9tFIvnfeCkqIwDQYJKoZIhvcNAQELBQAwTDELMAkGA1UEBhMCU0UxEzARBgNVBAcMCkdvdGhlbmJ1cmcxETAPBgNVBAoMCFRpbWVFZGl0MRUwEwYDVQQDDAxUaW1lRWRpdCBTU08wHhcNMjQwOTIzMTUwMDI3WhcNMjcxMjA3MTUwMDI3WjBMMQswCQYDVQQGEwJTRTETMBEGA1UEBwwKR290aGVuYnVyZzERMA8GA1UECgwIVGltZUVkaXQxFTATBgNVBAMMDFRpbWVFZGl0IFNTTzCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAL2SmJq/MygSwLtkBaXAYEpFJ22tnG2BtqwQPui91D8hLMuhLVe5f4QYb52xiS6xkS4NAM0lyWVggga1kNID9FYUblFpLqHKnDq7CleXs318pAcL+B0oDVM9GwiDAcm3h8vky2cu6rhRx7zm2MRZX/Fk2kt6Z9Kwh0xCrFKmUgZO1ARPr+KtSMZO7u54LcdwQ7CWO5W4cPKvOLBUbpRwqRZPRVRM4Y11zq4Iby0XZHkTLjRqvbbasxTZVLPMfXQ8yoMvLFOKXI3KPnb0g6XctRzd1HrMqEbYQQKpQckxh4Y9XOvFC8Kerxp8FUfpFOZMjDmjub0DqDsMxb5E4Y/w3j3cuWzrpQ0E5B7R0grKkp5+tasmjkdmxaxeuw4F5FHpdCsigenyIa/QQGU0vYojA/Kq9YeeS0mF+KYcIJdHOG+9vBV47x3yLLn3aPbt4aLuVqcrAsi9TwMkyiqS2Ags1qemPV6VSqXog0Fz/zKFK/55s9xpdFbUx3CyjyANVprPOHRQsXdBAhedM2qb1orxq+z3jbBA+NFPeOeLSxTzQbWznOiGBtTXYOJBv2wcLKjYUIsF+U0y0eJhmFP/MKgBXDyGN9UEu/5aDR/Pyhz6wCiDPFFVAlz1JWKUfSZuxt0FxJSwRWyOaJPIBO3CrOOAOFmHN1Egg+6g2dqSHT0yWceLAgMBAAGjITAfMB0GA1UdDgQWBBQf2NiRRDiwMbDX/xMNULXIhWU7bTANBgkqhkiG9w0BAQsFAAOCAgEAbMF98k9TZmiH2OtAWq1ulR9clLQQeacQSjfOJagoXSvITRwGx3NF20RNI+v3VFYuJk3/ZR1Fy2jhI2ObRJJ/BIZm72dpXwzxKC8P99q8NQRB7YhegZDRcrijW+LhxZewsWhJx7nDMAwI0aTsdsrtYytmk5ji1REzQrdF07x8JiDDDC8xOG+roRyazQCfKvrNmpYdJXv3RGP+5qqPt/jYVN/PcVd4rYp/9HNko8ehD60Cpe0qvEhpKXvOnQM5s307sMog0dZ9k/w+9uvzmx0e3TSENQm4xdxOsFuXp9z/MM2BopOnOlI+K25Iyywp+kP59oVVNQbUI+4ic6fH81VGNR/H3M0DZHf1tZ8CaIQWaJHusrJeRQFdJ7W0aDm8z3AReqLtETteV/04xX99noHRiOhkOt/hpwqTx5HvE+SQwdOJUa4e2ztqeJ5NlPd4ej8boU5KqdrqmOR8/lCKnaBGiETVBfoBudQ2Rht4Ppmmwm49PTEfJYLlepOdw16ilZ93lNIkVOE4An9418sGHvSWKoyT3wRRpAU1ZOdKtGBllBs7xbZSCEndgFyLmFrcLd/nE0R22CknceJYLzpG18y/1qUALQa+oTx4NS5uBia1Mh0clHOuUTPmPE+t0vPI/mmZF+Oh87JjPmzf3V98AIT1LzSZyODgDILXdB5bzDWgy7M=</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+      <EncryptionMethod Algorithm="http://www.w3.org/2009/xmlenc11#aes256-gcm"/>
+      <EncryptionMethod Algorithm="http://www.w3.org/2009/xmlenc11#aes128-gcm"/>
+      <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc"/>
+      <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/>
+    </KeyDescriptor>
+    <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
+    <AssertionConsumerService index="1" isDefault="true" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://auth.timeedit.net/v1/authenticate/callback/EU_EES?"/>
+  </SPSSODescriptor>
+  <Organization>
+    <OrganizationName xml:lang="en">TimeEdit AB</OrganizationName>
+    <OrganizationName xml:lang="sv">TimeEdit AB</OrganizationName>
+    <OrganizationDisplayName xml:lang="en">TimeEdit</OrganizationDisplayName>
+    <OrganizationDisplayName xml:lang="sv">TimeEdit</OrganizationDisplayName>
+    <OrganizationURL xml:lang="en">https://www.timeedit.com</OrganizationURL>
+    <OrganizationURL xml:lang="sv">https://www.timeedit.com</OrganizationURL>
+  </Organization>
+  <ContactPerson contactType="technical">
+    <Company>TimeEdit AB</Company>
+    <GivenName>TimeEdit Support</GivenName>
+    <EmailAddress>mailto:support@timeedit.com</EmailAddress>
+  </ContactPerson>
+  <ContactPerson contactType="support">
+    <Company>TimeEdit AB</Company>
+    <GivenName>TimeEdit Support</GivenName>
+    <EmailAddress>mailto:support@timeedit.com</EmailAddress>
+  </ContactPerson>
+  <ContactPerson contactType="administrative">
+    <Company>TimeEdit AB</Company>
+    <GivenName>TimeEdit Support</GivenName>
+    <EmailAddress>mailto:support@timeedit.com</EmailAddress>
+  </ContactPerson>
+</EntityDescriptor>
