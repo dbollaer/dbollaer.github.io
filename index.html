@@ -98,6 +98,9 @@
       width: 100%;
       max-width: 500px;
       margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .xp-display {
@@ -108,27 +111,104 @@
       font-weight: bold;
     }
 
-    .xp-bar-container {
-      width: 100%;
-      height: 40px;
-      background: #e0e0e0;
+    .cat-image-container {
+      width: 200px;
+      height: 200px;
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .xp-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #4caf50, #8bc34a);
-      width: 0%;
-      transition: width 0.5s ease;
-      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      font-weight: bold;
+      position: relative;
+      border: 3px dashed #ccc;
+    }
+
+    .cat-image-container::before {
+      content: '🐱';
+      position: absolute;
+      font-size: 80px;
+      opacity: 0.3;
+      z-index: 0;
+    }
+
+    .cat-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .kitten-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: #fff;
+      border-radius: 30px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      text-align: center;
+      max-width: 400px;
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      display: none;
+    }
+
+    .kitten-popup.show {
+      display: block;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .kitten-popup img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .kitten-popup h2 {
+      margin: 0 0 15px 0;
+      color: #667eea;
+      font-size: 2rem;
+    }
+
+    .kitten-popup p {
+      margin: 0 0 20px 0;
       font-size: 1.2rem;
+      color: #333;
+    }
+
+    .kitten-popup button {
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      border-radius: 25px;
+      border: none;
+      background: #667eea;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Patrick Hand', cursive;
+      font-weight: bold;
+    }
+
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1999;
+      display: none;
+    }
+
+    .popup-overlay.show {
+      display: block;
     }
 
     .controls {
@@ -262,9 +342,9 @@
     <div class="feedback" id="feedback"></div>
 
     <div class="xp-section">
-      <div class="xp-display" id="xpDisplay">0 / 100 XP</div>
-      <div class="xp-bar-container">
-        <div class="xp-bar" id="xpBar">0%</div>
+      <div class="xp-display" id="xpDisplay">0%</div>
+      <div class="cat-image-container">
+        <img id="catImage" class="cat-image" src="" alt="Kat">
       </div>
     </div>
 
@@ -276,6 +356,14 @@
   </div>
 
   <div id="confetti"></div>
+
+  <div class="popup-overlay" id="popupOverlay"></div>
+  <div class="kitten-popup" id="kittenPopup">
+    <img src="https://cataas.com/cat/cute" alt="Lachende kitten" id="kittenImage">
+    <h2>🎉 Gefeliciteerd! 🎉</h2>
+    <p>Je hebt 100 XP behaald!</p>
+    <button id="closePopupBtn">Doorgaan</button>
+  </div>
 
   <script>
     // Woordenlijst met emoji's
@@ -290,6 +378,48 @@
       { word: 'vis', emoji: '🐟' }
     ];
 
+    // Manual letter starting point definitions based on proper handwriting instruction
+    // Format: { letter: { xOffset: relative to centerX, yOffset: relative to centerY, angle: direction in radians, completionRate: optional percentage } }
+    const letterStartingPoints = {
+      // Magic c group - start below middle line, circle to left
+      'c': { xOffset: -0.15, yOffset: 0.05, angle: -Math.PI / 2 }, // Start below middle, curve left
+      'o': { xOffset: -0.15, yOffset: 0.05, angle: -Math.PI / 2 }, // Start below middle, curve left
+      'a': { xOffset: 0.12, yOffset: -0.2, angle: -2 * Math.PI / 3, completionRate: 90 }, // Start at top-right of circle (2 o'clock), curve down-left - higher rate to ensure small vertical stroke is included
+      'd': { xOffset: -0.15, yOffset: 0.05, angle: -Math.PI / 2 }, // Start below middle, circle left, then line up
+      'g': { xOffset: -0.15, yOffset: 0.05, angle: -Math.PI / 2 }, // Start below middle, curve left
+      'q': { xOffset: -0.15, yOffset: 0.05, angle: -Math.PI / 2 }, // Start below middle, curve left
+      
+      // Letter e - starts between middle and bottom, horizontal line right
+      'e': { xOffset: -0.2, yOffset: 0.15, angle: 0 }, // Start between middle-bottom, horizontal right
+      
+      // Straight line letters - start at top
+      'l': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'i': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      't': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      
+      // Other common letters
+      'h': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'n': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'm': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'r': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'b': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'p': { xOffset: 0.05, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top-center, line down, then curve at bottom
+      'f': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      'k': { xOffset: 0, yOffset: -0.4, angle: Math.PI / 2 }, // Start at top, line down
+      
+      // Curved letters starting from different positions
+      's': { xOffset: -0.1, yOffset: 0, angle: Math.PI / 4 }, // Start middle-left, curve
+      'u': { xOffset: -0.2, yOffset: -0.2, angle: -Math.PI / 2 }, // Start upper-left, curve down
+      'v': { xOffset: -0.2, yOffset: -0.2, angle: Math.PI / 3 }, // Start upper-left, diagonal down
+      'w': { xOffset: -0.2, yOffset: -0.2, angle: Math.PI / 3 }, // Start upper-left, diagonal down
+      'x': { xOffset: 0, yOffset: -0.3, angle: Math.PI / 4 }, // Start middle-top, diagonal
+      'y': { xOffset: -0.15, yOffset: -0.2, angle: Math.PI / 3 }, // Start upper-left, diagonal
+      'z': { xOffset: -0.2, yOffset: -0.2, angle: 0 }, // Start upper-left, horizontal
+      
+      // Round letters
+      'j': { xOffset: 0, yOffset: -0.3, angle: Math.PI / 2 }, // Start middle-top, curve down
+    };
+
     // Game state
     let currentWordIndex = 0;
     let currentLetterIndex = 0;
@@ -303,6 +433,7 @@
     let strokeCount = 0;
     let totalStrokeLength = 0;
     let letterTemplatePixels = null; // Store which pixels are part of the letter
+    let kittenPopupShown = false; // Track if popup has been shown
 
     // DOM elements
     const wordImage = document.getElementById('wordImage');
@@ -312,8 +443,44 @@
     const animationCanvas = document.getElementById('animationCanvas');
     const traceCanvas = document.getElementById('traceCanvas');
     const xpDisplay = document.getElementById('xpDisplay');
-    const xpBar = document.getElementById('xpBar');
+    const catImage = document.getElementById('catImage');
     const feedback = document.getElementById('feedback');
+    
+    // Random cat image URLs (using a free cat API)
+    const catImageUrls = [
+      'https://cataas.com/cat',
+      'https://cataas.com/cat/cute',
+      'https://cataas.com/cat/says/Hello',
+    ];
+    
+    let isAnimated = false; // Track if we're showing animated GIF
+    
+    // Load a random cat image when game starts (static image, not animated)
+    function loadRandomCat() {
+      if (isAnimated) return; // Don't reload if already showing animated GIF
+      const randomUrl = catImageUrls[Math.floor(Math.random() * catImageUrls.length)] + '?t=' + Date.now();
+      catImage.src = randomUrl;
+      catImage.style.opacity = '0';
+      
+      // Handle image load error - use emoji as fallback
+      catImage.onerror = function() {
+        // If image fails to load, show cat emoji instead
+        const catEmoji = document.createElement('div');
+        catEmoji.textContent = '🐱';
+        catEmoji.style.fontSize = '150px';
+        catEmoji.style.textAlign = 'center';
+        catEmoji.style.lineHeight = '200px';
+        catImage.style.display = 'none';
+        catImage.parentElement.appendChild(catEmoji);
+      };
+    }
+    
+    // Load animated GIF cat when 100% is reached
+    function loadAnimatedCat() {
+      isAnimated = true;
+      // Use animated cat GIF from the API
+      catImage.src = 'https://cataas.com/cat/gif?t=' + Date.now();
+    }
     const replayAnimationBtn = document.getElementById('replayAnimationBtn');
     const nextWordBtn = document.getElementById('nextWordBtn');
     const clearBtn = document.getElementById('clearBtn');
@@ -323,6 +490,7 @@
 
     // Initialize
     function init() {
+      loadRandomCat();
       loadWord(0);
       setupCanvas();
     }
@@ -333,6 +501,7 @@
       currentWord = words[currentWordIndex].word;
       currentLetterIndex = 0;
       letterCompleted = new Array(currentWord.length).fill(false);
+      isAnimated = false; // Reset animation flag when loading new word
 
       wordImage.textContent = words[currentWordIndex].emoji;
       wordDisplay.textContent = currentWord;
@@ -373,13 +542,7 @@
 
     // Setup canvas
     function setupCanvas() {
-      // Clear both canvases
-      clearCanvases();
-
-      // Draw dotted letter template on trace canvas
-      drawLetterTemplate();
-
-      // Setup drawing events
+      // Setup drawing events (clearCanvases already calls drawLetterTemplate, so don't call it again)
       traceCanvas.addEventListener('mousedown', startDraw);
       traceCanvas.addEventListener('mousemove', draw);
       traceCanvas.addEventListener('mouseup', stopDraw);
@@ -399,6 +562,178 @@
       drawLetterTemplate();
       strokeCount = 0;
       totalStrokeLength = 0;
+    }
+
+    // Get starting point for a letter (on the letter itself, not above it)
+    function getLetterStartingPoint(letter) {
+      const centerX = traceCanvas.width / 2;
+      const centerY = traceCanvas.height / 2;
+      
+      // Get letter metrics first
+      traceCtx.save();
+      traceCtx.font = '200px "Patrick Hand", cursive';
+      traceCtx.textAlign = 'center';
+      traceCtx.textBaseline = 'middle';
+      const metrics = traceCtx.measureText(letter);
+      const letterWidth = metrics.width;
+      const letterHeight = 200;
+      traceCtx.restore();
+      
+      // Check manual definitions first
+      const lowerLetter = letter.toLowerCase();
+      if (letterStartingPoints[lowerLetter]) {
+        const def = letterStartingPoints[lowerLetter];
+        // Calculate starting point based on letter metrics
+        const startX = centerX + (letterWidth * def.xOffset);
+        const startY = centerY + (letterHeight * def.yOffset);
+        
+        // Verify the point is on the letter by checking nearby pixels
+        const verifyImageData = traceCtx.getImageData(0, 0, traceCanvas.width, traceCanvas.height);
+        const verifyData = verifyImageData.data;
+        
+        // Check if calculated point is on a letter pixel
+        const checkX = Math.floor(startX);
+        const checkY = Math.floor(startY);
+        if (checkX >= 0 && checkX < traceCanvas.width && checkY >= 0 && checkY < traceCanvas.height) {
+          const idx = (checkY * traceCanvas.width + checkX) * 4;
+          const r = verifyData[idx];
+          const g = verifyData[idx + 1];
+          const b = verifyData[idx + 2];
+          // Check if it's a gray letter pixel
+          if (r > 140 && r < 180 && g > 140 && g < 180 && b > 140 && b < 180) {
+            return { x: startX, y: startY, angle: def.angle };
+          }
+        }
+        
+        // If not on letter, find nearest letter pixel
+        let nearestDist = Infinity;
+        let nearestX = startX;
+        let nearestY = startY;
+        
+        for (let dy = -15; dy <= 15; dy++) {
+          for (let dx = -15; dx <= 15; dx++) {
+            const testX = Math.floor(startX + dx);
+            const testY = Math.floor(startY + dy);
+            if (testX >= 0 && testX < traceCanvas.width && testY >= 0 && testY < traceCanvas.height) {
+              const idx = (testY * traceCanvas.width + testX) * 4;
+              const r = verifyData[idx];
+              const g = verifyData[idx + 1];
+              const b = verifyData[idx + 2];
+              if (r > 140 && r < 180 && g > 140 && g < 180 && b > 140 && b < 180) {
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < nearestDist) {
+                  nearestDist = dist;
+                  nearestX = testX;
+                  nearestY = testY;
+                }
+              }
+            }
+          }
+        }
+        
+        return { x: nearestX, y: nearestY, angle: def.angle };
+      }
+      
+      // Create temporary canvas to analyze letter shape with same settings as trace canvas
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = traceCanvas.width;
+      tempCanvas.height = traceCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      // Draw letter to temp canvas with same settings as the template (but fully opaque for detection)
+      tempCtx.save();
+      tempCtx.font = '200px "Patrick Hand", cursive';
+      tempCtx.textAlign = 'center';
+      tempCtx.textBaseline = 'middle';
+      tempCtx.fillStyle = '#999'; // Same color as template
+      tempCtx.fillText(letter, centerX, centerY);
+      tempCtx.restore();
+      
+      // Find the top-leftmost pixel of the letter
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+      
+      let startX = centerX;
+      let startY = centerY;
+      let found = false;
+      
+      // Search from top-left area, starting from the actual letter area
+      const leftBound = centerX - letterWidth / 2;
+      const rightBound = centerX + letterWidth / 2;
+      const topBound = centerY - letterHeight / 2;
+      const bottomBound = centerY + letterHeight / 2;
+      
+      // Find first gray pixel (part of the letter) from top-left
+      // Search in a more focused area - upper left quadrant of the letter
+      for (let y = topBound + 5; y < centerY - 20 && !found; y += 2) {
+        for (let x = leftBound + 5; x < centerX - 10 && !found; x += 2) {
+          if (x >= 0 && x < tempCanvas.width && y >= 0 && y < tempCanvas.height) {
+            const idx = (Math.floor(y) * tempCanvas.width + Math.floor(x)) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            
+            // Check if pixel is part of the letter (gray, similar to template)
+            // Template uses #999 which is rgb(153, 153, 153)
+            if (r > 100 && r < 200 && g > 100 && g < 200 && b > 100 && b < 200 && a > 100) {
+              // Verify it's actually on the letter by checking surrounding pixels
+              let onLetter = false;
+              for (let dy = -2; dy <= 2 && !onLetter; dy++) {
+                for (let dx = -2; dx <= 2 && !onLetter; dx++) {
+                  const checkX = x + dx;
+                  const checkY = y + dy;
+                  if (checkX >= 0 && checkX < tempCanvas.width && checkY >= 0 && checkY < tempCanvas.height) {
+                    const checkIdx = (checkY * tempCanvas.width + checkX) * 4;
+                    const checkR = data[checkIdx];
+                    const checkG = data[checkIdx + 1];
+                    const checkB = data[checkIdx + 2];
+                    if (checkR > 100 && checkR < 200 && checkG > 100 && checkG < 200 && checkB > 100 && checkB < 200) {
+                      onLetter = true;
+                    }
+                  }
+                }
+              }
+              
+              if (onLetter) {
+                startX = x;
+                startY = y;
+                found = true;
+              }
+            }
+          }
+        }
+      }
+      
+      // If still not found, search more broadly
+      if (!found) {
+        for (let y = topBound; y < centerY && !found; y += 1) {
+          for (let x = leftBound; x < centerX && !found; x += 1) {
+            if (x >= 0 && x < tempCanvas.width && y >= 0 && y < tempCanvas.height) {
+              const idx = (Math.floor(y) * tempCanvas.width + Math.floor(x)) * 4;
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+              
+              if (r > 100 && r < 200 && g > 100 && g < 200 && b > 100 && b < 200) {
+                startX = x;
+                startY = y;
+                found = true;
+              }
+            }
+          }
+        }
+      }
+      
+      // If still not found, use a calculated position on the letter
+      if (!found) {
+        // Position on the upper-left part of the letter, definitely on the letter shape
+        startX = centerX - letterWidth / 2.5;
+        startY = centerY - letterHeight / 2.5;
+      }
+      
+      // Default angle (down-right) if not in manual definitions
+      return { x: startX, y: startY, angle: Math.PI / 6 };
     }
 
     // Draw letter template (dotted/light gray) and store letter pixels
@@ -440,6 +775,8 @@
           }
         }
       }
+
+      // Note: Starting point and path preview are no longer drawn - only the letter template
     }
 
     // Play letter writing animation with cat
@@ -485,6 +822,8 @@
         animCtx.fillStyle = '#999';
         animCtx.fillText(letter, centerX, centerY);
         animCtx.restore();
+
+        // Note: Starting point dot and path preview are only shown in template canvas, not in animation
 
         // Draw the letter progressively as the cat writes it
         animCtx.save();
@@ -637,7 +976,13 @@
       if (!drawing) return;
 
       const percentage = calculateLetterCoverage();
-      if (percentage < 70) {
+      
+      // Get letter-specific completion rate, or use default 70%
+      const letter = currentWord[currentLetterIndex];
+      const lowerLetter = letter.toLowerCase();
+      const requiredPercentage = letterStartingPoints[lowerLetter]?.completionRate || 70;
+      
+      if (percentage < requiredPercentage) {
         feedback.textContent = `${percentage}% voltooid...`;
       }
     }
@@ -682,15 +1027,20 @@
       if (drawing) return; // Don't check while still drawing
 
       const percentage = calculateLetterCoverage();
+      
+      // Get letter-specific completion rate, or use default 70%
+      const letter = currentWord[currentLetterIndex];
+      const lowerLetter = letter.toLowerCase();
+      const requiredPercentage = letterStartingPoints[lowerLetter]?.completionRate || 70;
 
       // Show progress in feedback
-      if (percentage < 70) {
+      if (percentage < requiredPercentage) {
         feedback.textContent = `${percentage}% voltooid - ga door met tekenen!`;
         return; // Not complete yet
       }
 
-      // Only complete when at least 70% is finished
-      if (percentage >= 70) {
+      // Complete when the required percentage is reached
+      if (percentage >= requiredPercentage) {
         completeLetter();
       }
     }
@@ -723,24 +1073,57 @@
         feedback.textContent = 'Woord voltooid! 🎉';
         setTimeout(() => {
           feedback.textContent = '';
-          if (xp >= 100) {
-            launchConfetti();
-            feedback.textContent = 'Gefeliciteerd! Je hebt 100 XP behaald! 🎊';
-          }
+          // Note: showKittenPopup is already called in updateXP() when xp >= 100
         }, 1500);
       }
     }
 
     // Update XP display
     function updateXP() {
-      xpDisplay.textContent = `${xp} / 100 XP`;
-      const percentage = Math.min((xp / 100) * 100, 100);
-      xpBar.style.width = percentage + '%';
-      xpBar.textContent = Math.round(percentage) + '%';
-
-      if (xp >= 100) {
-        launchConfetti();
+      // Calculate percentage: 5% per letter (20 letters = 100%)
+      const percentage = Math.min(xp * 5, 100);
+      xpDisplay.textContent = `${percentage}%`;
+      
+      // Make cat image visible based on percentage (0% = invisible, 100% = fully visible)
+      // Show static image before 100%, animate only at 100%
+      const opacity = percentage / 100;
+      catImage.style.opacity = opacity.toString();
+      
+      // Only load animated GIF when exactly 100% is reached
+      if (percentage >= 100 && !isAnimated) {
+        loadAnimatedCat();
       }
+
+      if (percentage >= 100 && !kittenPopupShown) {
+        launchConfetti();
+        showKittenPopup();
+        kittenPopupShown = true;
+      }
+    }
+
+    // Show smiling kitten popup
+    function showKittenPopup() {
+      const popup = document.getElementById('kittenPopup');
+      const overlay = document.getElementById('popupOverlay');
+      const kittenImage = document.getElementById('kittenImage');
+      
+      // Load a new random cute kitten image
+      kittenImage.src = 'https://cataas.com/cat/cute?' + Date.now(); // Add timestamp to force reload
+      
+      overlay.classList.add('show');
+      setTimeout(() => {
+        popup.classList.add('show');
+      }, 100);
+    }
+
+    // Close popup
+    function closeKittenPopup() {
+      const popup = document.getElementById('kittenPopup');
+      const overlay = document.getElementById('popupOverlay');
+      popup.classList.remove('show');
+      setTimeout(() => {
+        overlay.classList.remove('show');
+      }, 300);
     }
 
     // Confetti animation
@@ -782,6 +1165,13 @@
       clearCanvases();
       feedback.textContent = '';
     };
+
+    // Close popup button handlers
+    const closePopupBtn = document.getElementById('closePopupBtn');
+    const popupOverlay = document.getElementById('popupOverlay');
+    
+    closePopupBtn.onclick = closeKittenPopup;
+    popupOverlay.onclick = closeKittenPopup;
 
     // Start game
     init();
